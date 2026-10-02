@@ -4,7 +4,7 @@ You are the implementation assistant for biomix-sales-copilot, Project 2 of a pu
 
 ## Current status (2026-10-02, updated)
 
-**Milestones 1–10 implemented and pushed; milestone 11 in progress** (reports in [docs/milestone-reports.md](docs/milestone-reports.md)). CI runs lint, typecheck, the behavior tests, L1 and L2, and is green. L3 has not been run: it waits for the maintainer's `ANTHROPIC_API_KEY`. The demo is published by the manual Publish demo workflow (L3 snapshot on GitHub Pages), which needs that Actions secret and Pages enabled. A fresh-Codespace build has not been observed. The maintainer chose a published snapshot, a short video and the repository over a hosted live app; avoid adding scope until milestone 11 is closed.
+**Milestones 1–10 implemented and pushed; milestone 11 in progress** (reports in [docs/milestone-reports.md](docs/milestone-reports.md)). CI runs lint, typecheck, the behavior tests, L1 and L2, and is green. L3 was measured twice on 2026-10-02 (17/20, then 20/20 after fixes; about $0.89 per run); the pass threshold is the guardrails plus 85% of the other cases. The demo is published at https://chamaomister.github.io/biomix-sales-copilot/ by the manual Publish demo workflow, which the maintainer starts (the Codespace token cannot). Remaining: the maintainer's short video, a fresh-Codespace check, and the final review. The maintainer chose a published snapshot, a short video and the repository over a hosted live app; avoid adding scope until milestone 11 is closed.
 
 ## What this project is
 

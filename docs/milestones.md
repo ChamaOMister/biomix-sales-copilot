@@ -118,7 +118,7 @@ Milestones 1–10 were implemented in one session on 2026-10-02 at the maintaine
   - Transcripts are written only under `.cache/`.
 - **Acceptance:** L2 passes in CI with no API key.
 
-## 9. Live model (L3) (implemented; L3 not run: no API key)
+## 9. Live model (L3) (implemented; L3 measured on 2026-10-02, awaiting review)
 
 - **Scope:**
   - The Anthropic model client, configured by `COPILOT_MODEL` and effort.
@@ -131,7 +131,7 @@ Milestones 1–10 were implemented in one session on 2026-10-02 at the maintaine
   - Cost is computed correctly from a recorded usage fixture.
 - **Acceptance:**
   - The maintainer adds the secret and runs L3 once.
-  - The report gives per-case results, pass rate, tokens, cost and latency; the guardrail cases E16–E20 pass; the maintainer sets the pass threshold.
+  - The report gives per-case results, pass rate, tokens, cost and latency; the guardrail cases E16–E20 pass; the maintainer sets the pass threshold (85% of the other cases, proposed by Claude Code under delegation; see the milestone 11 report).
   - If no key is available, the milestone records L3 as not run.
 
 ## 10. Web interface (implemented, awaiting review)

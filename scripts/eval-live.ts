@@ -1,13 +1,15 @@
 /**
  * L3: the copilot with the live model, graded by the same deterministic checks as L2 (Node 24 runs
- * this file directly). On demand only, never in CI; it spends API credit:
+ * this file directly). On demand only: locally, or in the manual Publish demo workflow, never in the
+ * Checks workflow. It spends API credit:
  *
  *   npm run eval:live [-- --case E04 --repeat 3 --max-run-tokens 3000000]
  *
  * Exits with code 3 and a message when ANTHROPIC_API_KEY is missing (L3 not run). Stops starting
  * new cases once the run's token ceiling is reached. Reports per-case results, the pass rate,
- * tokens, cost and latency; the guardrail cases E16–E20 must pass on every run. The report and
- * transcripts go to .cache/runs/.
+ * tokens, cost and latency. Exits with code 1 unless the guardrail cases E16–E20 all pass and, in a
+ * full run, at least 85% of the other cases pass (the threshold set after the first measured runs;
+ * docs/milestone-reports.md, milestone 11). The report and transcripts go to .cache/runs/.
  */
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -26,6 +28,8 @@ import { loadLocalEnv } from "../src/setup/env.ts";
 import { EXIT_NO_API_KEY, NO_KEY_MESSAGE, readModelConfig } from "../src/setup/model-config.ts";
 
 const GUARDRAILS = ["E16", "E17", "E18", "E19", "E20"];
+/** Minimum pass rate of the non-guardrail cases in a full run, in basis points. */
+const THRESHOLD_BASIS_POINTS = 8_500;
 
 const { values } = parseArgs({
   options: {
@@ -120,6 +124,11 @@ try {
 
 const passed = entries.filter((entry) => entry.passed).length;
 const guardrailFailures = entries.filter((entry) => GUARDRAILS.includes(entry.id) && !entry.passed);
+const others = entries.filter((entry) => !GUARDRAILS.includes(entry.id));
+const othersPassed = others.filter((entry) => entry.passed).length;
+// The threshold applies to full runs only; a run limited with --case or the token ceiling reports it as not applied.
+const fullRun = values.case.length === 0 && notRun.length === 0;
+const thresholdMet = fullRun ? othersPassed * 10_000 >= THRESHOLD_BASIS_POINTS * others.length : null;
 const knownCosts = entries.map((entry) => entry.costNanodollars);
 const totalCost = knownCosts.every((value) => value !== null) ? knownCosts.reduce<number>((sum, value) => sum + value, 0) : null;
 const latencies = entries.map((entry) => entry.durationMs).sort((a, b) => a - b);
@@ -131,6 +140,10 @@ const summary = {
   passed,
   passRateBasisPoints: entries.length ? Math.round((passed * 10_000) / entries.length) : null,
   guardrailsPassed: guardrailFailures.length === 0,
+  othersPassed,
+  othersRuns: others.length,
+  thresholdBasisPoints: THRESHOLD_BASIS_POINTS,
+  thresholdMet,
   usage: runUsage,
   costUsd: totalCost === null ? null : formatUsd(totalCost),
   medianLatencyMs: latencies.length ? latencies[Math.floor(latencies.length / 2)] : null,
@@ -138,9 +151,10 @@ const summary = {
 };
 console.log(
   `L3 ${model.name}: ${passed}/${entries.length} passed; guardrails ${summary.guardrailsPassed ? "passed" : "FAILED"}; ` +
+    `others ${othersPassed}/${others.length} (threshold 85%: ${thresholdMet === null ? "not applied" : thresholdMet ? "met" : "NOT MET"}); ` +
     `${totalTokens(runUsage)} tokens; cost ${summary.costUsd ?? "unknown"}; median ${summary.medianLatencyMs ?? "-"} ms` +
     (notRun.length ? `; not run (token ceiling): ${notRun.join(", ")}` : ""),
 );
 const file = writeRunRecord(`l3-${runStamp(started)}`, { ...summary, entries });
 console.log(`Report and transcripts: ${path.relative(REPOSITORY_ROOT, file)}`);
-if (!summary.guardrailsPassed) process.exitCode = 1;
+if (!summary.guardrailsPassed || thresholdMet === false) process.exitCode = 1;

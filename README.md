@@ -2,6 +2,8 @@
 
 A sales investigation copilot. It answers questions about invoiced sales and scheduled collections by calling a fixed set of read-only tools, served by an MCP server over Postgres, and it cites the tool result behind every figure. SQL and TypeScript do all the arithmetic; the language model never does. The copilot never writes data, contacts third parties or sends messages.
 
+**[See the live demo answers](https://chamaomister.github.io/biomix-sales-copilot/)**: twenty investigation questions answered by Claude Opus 5.5, each with the tool calls and results behind every figure, and each graded against the evaluation answer key (latest run: 20 of 20 passed).
+
 **All data is fictional and synthetic.** It comes from the seeded generator of Project 1, [biomix-use-cases](https://github.com/ChamaOMister/biomix-use-cases) v1.0.0, and is regenerated locally. No dataset is committed. Scheduled collections are contractual installments, not payments; the data has no actual payments.
 
 This is Project 2 of a portfolio. Project 1 cleaned and reported the sales data; Project 3, an n8n follow-up agent, is a separate repository and out of scope here. The design is in [decision 001](docs/decision-001-project-2.md), and the work is split into [milestones](docs/milestones.md).
@@ -76,7 +78,7 @@ Twenty cases (E01–E20) run at three levels, with expected values computed at r
 
 - **L1** (CI): each case's reference tool calls return the expected values.
 - **L2** (CI): the copilot loop with a scripted model passes the same deterministic grading as L3.
-- **L3** (on demand): the live model answers each question. The guardrail cases E16–E20 (payments, dates after the as-of date, product collections, messaging, the answer key) must pass every run; the pass threshold for the others is the maintainer's to set after the first measured run.
+- **L3** (on demand): the live model answers each question. The guardrail cases E16–E20 (payments, dates after the as-of date, product collections, messaging, the answer key) must pass every run, and at least 85% of the other fifteen must pass in a full run (at most two misses); otherwise `npm run eval:live` exits with code 1 and nothing is published.
 
 ## API key and cost
 
@@ -85,7 +87,7 @@ The live model is Anthropic's `claude-opus-5-5` at effort `medium` by default (`
 - Store the key as a Codespaces secret named `ANTHROPIC_API_KEY`, as a user secret with access to this repository only. Outside Codespaces, export it or put it in `.env.local`. Never commit it.
 - Use a key dedicated to this project in an Anthropic Console workspace with a monthly spend limit. API usage is billed separately from any Claude subscription.
 - Only the model client receives the key; the MCP server's environment excludes it, logs record error types and request IDs only, and a test checks that a canary key never reaches output or run files.
-- Estimated cost per question is about $0.20–0.30 with Opus 5.5, so a full L3 run of 20 cases is about $4–6 (decision 001, section 5). `npm run eval:live` stops at `--max-run-tokens` (default 3,000,000) and reports measured tokens and cost.
+- Measured cost with Opus 5.5 at effort `medium`: about $0.89 for a full L3 run of 20 questions (two runs on 2026-10-02), so about $0.02–0.13 per question; prompt caching serves most input tokens. Decision 001 estimated $4–6. `npm run eval:live` stops at `--max-run-tokens` (default 3,000,000) and reports measured tokens and cost.
 
 Without a key, `npm run ask` and `npm run eval:live` exit with code 3 and say so; everything else works.
 
@@ -95,7 +97,7 @@ Without a key, `npm run ask` and `npm run eval:live` exit with code 3 and say so
 
 ## Publishing the demo
 
-The public demo is the answer snapshot of a live (L3) run, served by GitHub Pages. The manual **Publish demo** workflow (Actions → Publish demo → Run workflow) loads the data, runs `npm run eval:live` with the `ANTHROPIC_API_KEY` Actions secret, renders the snapshot with each answer's grading result and deploys it. A guardrail failure or a missing key deploys nothing, and nothing generated is committed. Each run spends API credit (about $4–6).
+The public demo is the answer snapshot of a live (L3) run, served by GitHub Pages. The manual **Publish demo** workflow (Actions → Publish demo → Run workflow) loads the data, runs `npm run eval:live` with the `ANTHROPIC_API_KEY` Actions secret, renders the snapshot with each answer's grading result and deploys it. A guardrail failure, a pass rate below the threshold or a missing key deploys nothing, and nothing generated is committed. Each run spends API credit (about $0.90 measured).
 
 One-time setup: add `ANTHROPIC_API_KEY` under Settings → Secrets and variables → Actions, and set Settings → Pages → Source to "GitHub Actions".
 

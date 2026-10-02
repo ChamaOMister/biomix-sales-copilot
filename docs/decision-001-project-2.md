@@ -210,7 +210,7 @@ The definitions behind E06, E07, E08, E10 and E11 were checked against seed 2026
 - For set answers, every expected ID is present and none outside the set.
 - Forbidden content is absent (for example, the corrected invoices' original amounts).
 - Tool-call and token budgets are respected.
-- The guardrail cases, E16–E20, must pass on every run. For the other cases the maintainer sets the pass threshold after the first measured run. `--repeat N` measures stability.
+- The guardrail cases, E16–E20, must pass on every run. For the other cases the maintainer sets the pass threshold after the first measured run (set on 2026-10-02 to 85% of the other cases in a full run, on Claude Code's recommendation under delegation; the maintainer may change it). `--repeat N` measures stability.
 
 **Case validity.** A case is accepted only after L1 shows it is answerable with the tools and that its AK facts agree with RC. A question never contains its expected values; a test enforces this.
 
@@ -239,7 +239,7 @@ The definitions behind E06, E07, E08, E10 and E11 were checked against seed 2026
 - An API key is billed separately from a Claude Code subscription. Use a key dedicated to this project, in an Anthropic Console workspace with a monthly spend limit, so it can be capped and revoked.
 - Only the model client reads the key; the MCP server's environment allowlist excludes it. Logs record error type, HTTP status and request ID, never headers, keys or the environment. SDK debug logging stays off.
 - A test runs the copilot with a canary key value and asserts it appears nowhere in stdout, stderr or run files.
-- CI never has the key, and L3 never runs in CI.
+- The Checks workflow (every push and pull request) never has the key and never runs L3. Amended 2026-10-02 at the maintainer's choice to publish the demo: only the manual Publish demo workflow, started by someone with write access, receives the key as an Actions secret and runs L3.
 
 **Expected cost.** This is an estimate, replaced by measured usage in milestone 9. Assumptions per question: about 4 model requests, about 6k tokens of static tool definitions and system prompt, tool results of at most about 3k tokens each, and about 6k output tokens including thinking. That is about 42k input tokens per question without caching. Prices are Anthropic API list prices per million tokens as of 2026-09, in US dollars.
 
@@ -250,6 +250,8 @@ The definitions behind E06, E07, E08, E10 and E11 were checked against seed 2026
 | `claude-haiku-4-5` | $1 / $5 (cache reads $0.10) | ≈ $0.05–0.07 | ≈ $1–1.50 |
 
 The lower bounds assume prompt caching of the static prefix and the growing conversation; 5-minute cache writes cost 1.25× the input price. The runner stops a run at a configured token ceiling.
+
+**Measured (2026-10-02, milestone 11):** two full L3 runs with `claude-opus-5-5` at effort `medium` cost $0.8893 and $0.8943, about $0.02–0.13 per question and roughly a fifth of the estimate above, because cache reads served about 90% of the input tokens.
 
 **Without a paid key**, everything except L3 and free-form questions runs: all behavior tests, L1 and L2, the MCP server, and a keyless tool console (`npm run tools -- <tool> '<json input>'`) that shows real tool results.
 
