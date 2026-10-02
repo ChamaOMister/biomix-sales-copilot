@@ -91,7 +91,7 @@ Without a key, `npm run ask` and `npm run eval:live` exit with code 3 and say so
 
 ## Web interface
 
-`npm run web` serves a single page from Node's built-in HTTP server (no framework) on `127.0.0.1:3000`. It has no authentication: keep the Codespaces port **private**, because a public port would let anyone spend the API key. For readers who should not need to deploy anything, `npm run web:snapshot` writes a self-contained HTML page of questions, answers and the tool results behind them; CI attaches it to each run as the `copilot-snapshot` artifact.
+`npm run web` serves a single page from Node's built-in HTTP server (no framework) on `127.0.0.1:3000`. It has no authentication: keep the Codespaces port **private**, because a public port would let anyone spend the API key. For readers who should not need to deploy anything, `npm run web:snapshot` writes a self-contained HTML page of questions, answers and the tool results behind them; CI attaches it to each run as the `biomix-copilot-snapshot.html` artifact.
 
 ## Limits
 
