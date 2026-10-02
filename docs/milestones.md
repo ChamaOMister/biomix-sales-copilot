@@ -144,12 +144,13 @@ Milestones 1–10 were implemented in one session on 2026-10-02 at the maintaine
 - **Acceptance:**
   - The web UI connects to the copilot and displays responses.
 
-## 11. Verify and package
+## 11. Verify and package (in progress)
 
 - **Scope:**
   - README setup, commands and limits.
   - A fresh-Codespace verification record.
   - A demo script of commands and questions. Its outputs are not committed without maintainer approval.
+  - Publishing: a manual workflow runs L3 and deploys the answer snapshot to GitHub Pages (the maintainer's choice on 2026-10-02: a published snapshot, a short video and the repository, not a hosted live app).
   - Final review. A release only if the maintainer asks for one.
 - **Tests:** none new. The full `npm run check`, L1 and L2 must pass.
 - **Acceptance:** the maintainer's review, with actual evidence and unresolved risks recorded.

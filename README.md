@@ -93,6 +93,12 @@ Without a key, `npm run ask` and `npm run eval:live` exit with code 3 and say so
 
 `npm run web` serves a single page from Node's built-in HTTP server (no framework) on `127.0.0.1:3000`. It has no authentication: keep the Codespaces port **private**, because a public port would let anyone spend the API key. For readers who should not need to deploy anything, `npm run web:snapshot` writes a self-contained HTML page of questions, answers and the tool results behind them; CI attaches it to each run as the `biomix-copilot-snapshot.html` artifact.
 
+## Publishing the demo
+
+The public demo is the answer snapshot of a live (L3) run, served by GitHub Pages. The manual **Publish demo** workflow (Actions → Publish demo → Run workflow) loads the data, runs `npm run eval:live` with the `ANTHROPIC_API_KEY` Actions secret, renders the snapshot with each answer's grading result and deploys it. A guardrail failure or a missing key deploys nothing, and nothing generated is committed. Each run spends API credit (about $4–6).
+
+One-time setup: add `ANTHROPIC_API_KEY` under Settings → Secrets and variables → Actions, and set Settings → Pages → Source to "GitHub Actions".
+
 ## Limits
 
 - The data is one fictional company, seed 2026, as of 2026-09-25. Questions about later dates get `insufficient_data`.

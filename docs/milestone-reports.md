@@ -18,7 +18,7 @@ Environment for every check below: a GitHub Codespace (2 CPUs, 8 GB) not built f
 | `git -C .cache/project-1 status --porcelain` / `rev-parse HEAD` | clean; `af486a5b4a2af0a7c7f71c7e124e47a7005a5a81` |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 
-**Not run, for every milestone:** a fresh Codespace built from `.devcontainer/` (this Codespace predates it), and the GitHub Actions workflow (nothing has been pushed). Both are acceptance criteria for milestone 1 and must be observed by the maintainer.
+**Not run, for every milestone:** a fresh Codespace built from `.devcontainer/` (this Codespace predates it). It is an acceptance criterion for milestone 1 and must be observed by the maintainer. The GitHub Actions workflow has since run green on the pushed work (see milestone 11).
 
 ---
 
@@ -179,4 +179,17 @@ Checks not run and why: visual review in a browser (no browser in this environme
 Known limitations/risks: not designed for public hosting. Whether to publish the snapshot (for example as a release asset) is the maintainer's decision.
 Questions requiring a business decision: whether and where to publish the snapshot for recruiters.
 Next proposed milestone: 11 (verify and package): the README and demo script are drafted; the fresh-Codespace record, CI evidence, L3 and the final review remain.
+```
+
+```text
+Milestone: 11. Verify and package (in progress)
+Implemented behavior: the work was committed (24bb6c7) and pushed at the maintainer's request, and CI ran green. CI moved to actions v7 on a pinned ubuntu-24.04 runner, and the snapshot is uploaded unzipped as biomix-copilot-snapshot.html. The snapshot now links to the source code (`--code-url`) and shows each answer's grading result and the overall pass count. A manual "Publish demo" workflow runs L3 with the ANTHROPIC_API_KEY Actions secret and deploys the L3 snapshot to GitHub Pages; nothing generated is committed.
+Files changed: .github/workflows/{ci,publish-demo}.yml, .gitignore (.claude/settings.local.json*), src/web/snapshot.ts, scripts/eval-snapshot.ts, test/web.test.ts, README.md, docs/demo.md, this report, docs/milestones.md, CLAUDE.md.
+Decisions/defaults and reasons: the maintainer chose to show the project through a published L3 snapshot, a short video and the repository, not a hosted live app (2026-10-02). The snapshot is built and deployed by a manual workflow, so the published page records how it was produced and no generated file enters Git; a guardrail failure deploys nothing. The runner is pinned because ubuntu-latest moves to Ubuntu 26 on 2026-10-19.
+Checks run (exact command + outcome): GitHub Actions "Checks" run 36959734519 on 24bb6c7 → success in 1m22s ("Reader self-check passed", "L1: 20/20 cases passed", "L2: 20/20 cases passed", snapshot artifact attached), with Node 20 deprecation warnings; run 36959926823 on 4ee5ce9 (actions v7) → success in 1m27s, no warnings, artifact biomix-copilot-snapshot.html. Locally: `npm run web:snapshot -- --code-url https://github.com/ChamaOMister/biomix-sales-copilot` → "20 of 20 answers passed the deterministic checks" and the code link; `--code-url 'javascript:alert(1)'` → usage error.
+Evaluation results: L1 20/20 and L2 20/20 in CI. L3 not run.
+Checks not run and why: the Publish demo workflow (needs the ANTHROPIC_API_KEY Actions secret and GitHub Pages enabled with source "GitHub Actions"; the Codespace token cannot change repository settings: HTTP 403); L3; a fresh Codespace built from the dev container; a visual browser review.
+Known limitations/risks: each Publish demo run spends API credit; the Anthropic workspace spend limit is the cap. The published page shows failed answers as failed.
+Questions requiring a business decision: the L3 pass threshold for E01–E15, after the first run.
+Next proposed milestone: none; after the first Publish demo run, record its results here, add the page link and a short video to the README, and do the final review.
 ```

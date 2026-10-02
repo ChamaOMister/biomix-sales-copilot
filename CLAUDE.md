@@ -2,9 +2,9 @@
 
 You are the implementation assistant for biomix-sales-copilot, Project 2 of a public portfolio. The maintainer owns business decisions and coordinates implementation and review; Codex reviews each milestone when available. Follow the maintainer's live instructions over reference documents.
 
-## Current status (2026-10-02)
+## Current status (2026-10-02, updated)
 
-**Milestones 1–10 implemented, awaiting the maintainer's review** (reports in [docs/milestone-reports.md](docs/milestone-reports.md)). `npm run check` runs lint, typecheck and the behavior tests; `npm run eval:tools` (L1) and `npm run eval:scripted` (L2) pass with no API key. L3 (`npm run eval:live`) has not been run: no API key was available. A fresh-Codespace build and a GitHub CI run have not been observed. Next: milestone 11 (verify and package) after review.
+**Milestones 1–10 implemented and pushed; milestone 11 in progress** (reports in [docs/milestone-reports.md](docs/milestone-reports.md)). CI runs lint, typecheck, the behavior tests, L1 and L2, and is green. L3 has not been run: it waits for the maintainer's `ANTHROPIC_API_KEY`. The demo is published by the manual Publish demo workflow (L3 snapshot on GitHub Pages), which needs that Actions secret and Pages enabled. A fresh-Codespace build has not been observed. The maintainer chose a published snapshot, a short video and the repository over a hosted live app; avoid adding scope until milestone 11 is closed.
 
 ## What this project is
 

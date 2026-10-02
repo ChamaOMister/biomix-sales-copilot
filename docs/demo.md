@@ -60,3 +60,5 @@ npm run web:snapshot -- --from .cache/runs/l3-<timestamp>.json
 ```
 
 The report gives per-case results, the pass rate, tokens, cost and latency. The guardrail cases E16–E20 must pass.
+
+To publish the snapshot instead of running L3 locally, run the **Publish demo** workflow in GitHub Actions (see the README).

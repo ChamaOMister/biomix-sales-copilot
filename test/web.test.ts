@@ -98,8 +98,10 @@ describe("snapshot", () => {
           answer: `Yes & "quoted" 'text'`,
           limitations: [{ code: "NO_PAYMENT_DATA", description: "No <i>payments</i>." }],
           toolCalls: [{ id: "r1", tool: "sales_totals", input: { q: "<x>" }, isError: false, value: { name: "</pre><script>" }, cited: true }],
+          passed: false,
         },
       ],
+      codeUrl: `https://example.invalid/"><script>`,
     });
     expect(html).not.toMatch(/<script/i);
     expect(html).toContain("Is &lt;script&gt;alert(1)&lt;/script&gt; escaped?");
@@ -107,5 +109,18 @@ describe("snapshot", () => {
     expect(html).toContain("scripted model (evaluation level L2)");
     expect(html).toContain("commit cccccccccccc, seed 1");
     expect(escapeHtml(`<&>"'`)).toBe("&lt;&amp;&gt;&quot;&#39;");
+    expect(html).toContain(`href="https://example.invalid/&quot;&gt;&lt;script&gt;"`);
+  });
+
+  test("shows each answer's grading result and the overall count", () => {
+    const entry = { title: "t", question: "q", status: "answered", answer: "a", limitations: [], toolCalls: [] };
+    const base = { level: "L3" as const, model: "m", generatedAt: "2030-01-31T00:00:00.000Z", dataset: null };
+    const html = renderSnapshot({ ...base, entries: [{ ...entry, id: "E01", passed: true }, { ...entry, id: "E02", passed: false }] });
+    expect(html).toContain("1 of 2 answers passed the deterministic checks");
+    expect(html).toContain("passed the checks");
+    expect(html).toContain("failed the checks");
+    const ungraded = renderSnapshot({ ...base, entries: [{ ...entry, id: "E01" }] });
+    expect(ungraded).not.toContain("the checks");
+    expect(ungraded).not.toContain("Source code");
   });
 });

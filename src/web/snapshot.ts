@@ -11,6 +11,8 @@ export interface SnapshotEntry {
   answer: string | null;
   limitations: { code: string; description: string }[];
   toolCalls: { id: string; tool: string; input: unknown; isError: boolean; value: unknown; cited: boolean }[];
+  /** The deterministic grading result, when the snapshot comes from a graded run. */
+  passed?: boolean;
 }
 
 export interface SnapshotInput {
@@ -19,6 +21,8 @@ export interface SnapshotInput {
   generatedAt: string;
   dataset: { asOf: string; repository: string; tag: string; commit: string; seed: number } | null;
   entries: SnapshotEntry[];
+  /** Where the source code lives, linked from the page header. */
+  codeUrl?: string;
 }
 
 export function escapeHtml(text: string): string {
@@ -32,10 +36,10 @@ const STYLE = `
 main{max-width:880px;margin:0 auto;padding:24px 16px 64px}h1{font-size:1.5rem;margin:0 0 6px}
 .muted{color:var(--muted);font-size:.88rem}article{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0}
 h2{font-size:1.05rem;margin:0 0 4px}.q{font-style:italic;margin:4px 0 10px}.a{font-size:1.02rem;white-space:pre-wrap}
-.status{font-weight:600;font-size:.85rem}.answered{color:var(--accent)}.insufficient_data,.out_of_scope{color:var(--warn)}.incomplete,.format_error{color:var(--error)}
+.status,.grade{font-weight:600;font-size:.85rem}.grade{margin-left:8px}.pass{color:var(--accent)}.fail{color:var(--error)}.answered{color:var(--accent)}.insufficient_data,.out_of_scope{color:var(--warn)}.incomplete,.format_error{color:var(--error)}
 h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 4px}ul{margin:0;padding-left:20px}
 details{border-top:1px solid var(--line);padding:5px 0}summary{cursor:pointer;font-size:.9rem;overflow-wrap:anywhere}
-pre{background:var(--code);border-radius:8px;padding:10px;overflow-x:auto;font-size:.78rem;max-height:380px}nav a{color:var(--accent)}
+pre{background:var(--code);border-radius:8px;padding:10px;overflow-x:auto;font-size:.78rem;max-height:380px}nav a,p a{color:var(--accent)}
 `;
 
 function entryHtml(entry: SnapshotEntry): string {
@@ -52,12 +56,22 @@ function entryHtml(entry: SnapshotEntry): string {
     : "";
   return `<article id="${escapeHtml(entry.id)}"><h2>${escapeHtml(entry.id)} · ${escapeHtml(entry.title)}</h2>
 <p class="q">${escapeHtml(entry.question)}</p>
-<p class="status ${escapeHtml(entry.status)}">${escapeHtml(entry.status.replace("_", " "))}</p>
+<p><span class="status ${escapeHtml(entry.status)}">${escapeHtml(entry.status.replace("_", " "))}</span>${gradeHtml(entry.passed)}</p>
 ${entry.answer === null ? "" : `<p class="a">${escapeHtml(entry.answer)}</p>`}
 ${limitations}${calls}</article>`;
 }
 
+function gradeHtml(passed: boolean | undefined): string {
+  if (passed === undefined) return "";
+  return passed ? `<span class="grade pass">passed the checks</span>` : `<span class="grade fail">failed the checks</span>`;
+}
+
 export function renderSnapshot(input: SnapshotInput): string {
+  const graded = input.entries.filter((entry) => entry.passed !== undefined);
+  const grading = graded.length
+    ? ` ${graded.filter((entry) => entry.passed).length} of ${graded.length} answers passed the deterministic checks against the evaluation answer key.`
+    : "";
+  const code = input.codeUrl ? ` <a href="${escapeHtml(input.codeUrl)}">Source code, tests and evaluations</a>.` : "";
   const how =
     input.level === "L2"
       ? "Answers come from a scripted model (evaluation level L2): it replays a fixed tool plan and a fixed answer written with placeholders, so every figure below was filled in from the real tool results. It shows the tools, validation and rendering, not a live model's choices."
@@ -71,7 +85,7 @@ export function renderSnapshot(input: SnapshotInput): string {
 <body><main>
 <h1>Biomix Sales Copilot: answer snapshot</h1>
 <p class="muted">A sales investigation copilot that answers questions about invoiced sales and scheduled collections by calling a fixed set of read-only tools, and cites the tool results behind every figure. All data is synthetic and fictional; scheduled installments are contractual amounts, not payments.</p>
-<p class="muted">${how} ${dataset} Generated ${escapeHtml(input.generatedAt)}.</p>
+<p class="muted">${how}${grading} ${dataset} Generated ${escapeHtml(input.generatedAt)}.${code}</p>
 <nav class="muted">${input.entries.map((entry) => `<a href="#${escapeHtml(entry.id)}">${escapeHtml(entry.id)}</a>`).join(" · ")}</nav>
 ${input.entries.map(entryHtml).join("\n")}
 </main></body></html>
