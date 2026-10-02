@@ -15,7 +15,7 @@ export const WINDOW_DESCRIPTIONS: Readonly<Record<WindowName, string>> = {
   "christmas-lead": "the 21 days before 25 December, not including the day itself",
 };
 
-const LEAD_DAYS = 21;
+export const LEAD_DAYS = 21;
 
 /** The `n`-th given weekday (0 = Sunday) of a month. */
 export function nthWeekday(year: number, month: number, weekday: number, n: number): CalendarDate {

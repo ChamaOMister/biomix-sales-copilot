@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { normalizeInput, parseAnswer, renderScalar, resolveAnswer, type ToolResultRecord } from "../src/copilot/answer.ts";
+import { describeProblems, normalizeInput, parseAnswer, renderScalar, resolveAnswer, type ToolResultRecord } from "../src/copilot/answer.ts";
 import { runCopilot } from "../src/copilot/loop.ts";
 import { LIMITATION_CODES, SYSTEM_PROMPT } from "../src/copilot/prompt.ts";
 import { answerTurn, ScriptedModelClient, type ScriptTurn } from "../src/copilot/scripted.ts";
@@ -68,6 +68,12 @@ describe("placeholder resolution and rendering", () => {
     expect(check("Sales were {{r1.totals.salesBrl}}, twice the previous year.")).toEqual(["SPELLED_OUT_QUANTITY"]);
     expect(check("The ten largest customers: {{r1.groups.0.label}}.")).toEqual(["SPELLED_OUT_QUANTITY"]);
     expect(check("Sales of {{r1.totals.salesBrl}} came from one region, {{r1.groups.0.label}}.")).toEqual([]);
+  });
+
+  test("a rejection names the digits written outside placeholders", () => {
+    const { problems } = resolveAnswer({ status: "answered", text: "In the 21 days (to 2026-05-09) sales were {{r1.totals.salesBrl}}, 21 in all.", limitations: [] }, results);
+    expect(problems).toEqual([{ code: "DIGITS_OUTSIDE_PLACEHOLDERS", found: ["21", "2026-05-09"] }]);
+    expect(describeProblems(problems)).toContain(`"21", "2026-05-09" written outside a placeholder`);
   });
 
   test("answered needs a placeholder; other statuses do not", () => {

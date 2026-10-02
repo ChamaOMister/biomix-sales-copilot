@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { toSafeInteger } from "../../db/pool.ts";
 import { money } from "../../shared/money.ts";
-import { WINDOW_DESCRIPTIONS, WINDOW_NAMES, windowDates, windowStatus } from "../../shared/windows.ts";
+import { LEAD_DAYS, WINDOW_DESCRIPTIONS, WINDOW_NAMES, windowDates, windowStatus } from "../../shared/windows.ts";
 import { BUSINESS_UNIT_LABELS, envelope, LIMITS, NOTES, ToolError, type Note } from "../conventions.ts";
 import { checkFiltersExist, filterConditions, filterEcho, filterShape, limitSchema, SqlParams } from "../inputs.ts";
 import { count, defineTool } from "../tool.ts";
@@ -106,7 +106,7 @@ export const recurringWindowGaps = defineTool({
       context.dataset,
       notes,
       {
-        window: { name: input.window, definition: WINDOW_DESCRIPTIONS[input.window] },
+        window: { name: input.window, definition: WINDOW_DESCRIPTIONS[input.window], ...(input.window === "agro-season" ? {} : { leadDays: LEAD_DAYS }) },
         referenceWindows: references,
         currentWindow: current,
         filters,

@@ -44,7 +44,7 @@ export type AnswerProblem =
   | { code: "PLACEHOLDER_UNRESOLVED"; placeholder: string }
   | { code: "PLACEHOLDER_NOT_SCALAR"; placeholder: string }
   | { code: "MALFORMED_PLACEHOLDER" }
-  | { code: "DIGITS_OUTSIDE_PLACEHOLDERS" }
+  | { code: "DIGITS_OUTSIDE_PLACEHOLDERS"; found: string[] }
   | { code: "SPELLED_OUT_QUANTITY"; word: string }
   | { code: "ANSWERED_WITHOUT_PLACEHOLDER" };
 
@@ -125,7 +125,8 @@ export function resolveAnswer(answer: Answer, results: readonly ToolResultRecord
   });
   const outside = answer.text.replace(PLACEHOLDER, " ");
   if (ANY_BRACES.test(outside)) problems.push({ code: "MALFORMED_PLACEHOLDER" });
-  if (/\d/.test(outside)) problems.push({ code: "DIGITS_OUTSIDE_PLACEHOLDERS" });
+  const digits = [...new Set((outside.match(/[^\s(),;:]*\d[^\s(),;:]*/g) ?? []).map((text) => text.replace(/[.!?]+$/, "")))];
+  if (digits.length) problems.push({ code: "DIGITS_OUTSIDE_PLACEHOLDERS", found: digits.slice(0, 5) });
   const words = new Set(outside.toLowerCase().match(/[a-z]+/g) ?? []);
   for (const word of QUANTITY_WORDS) if (words.has(word)) problems.push({ code: "SPELLED_OUT_QUANTITY", word });
   if (answer.status === "answered" && placeholders === 0) problems.push({ code: "ANSWERED_WITHOUT_PLACEHOLDER" });
@@ -200,9 +201,9 @@ export function describeProblems(problems: readonly AnswerProblem[]): string {
         case "MALFORMED_PLACEHOLDER":
           return "MALFORMED_PLACEHOLDER: write placeholders exactly as {{rN.path.to.field}}.";
         case "DIGITS_OUTSIDE_PLACEHOLDERS":
-          return "DIGITS_OUTSIDE_PLACEHOLDERS: every digit must come from a placeholder.";
+          return `DIGITS_OUTSIDE_PLACEHOLDERS: ${problem.found.map((text) => JSON.stringify(text)).join(", ")} written outside a placeholder; every digit must come from a placeholder, so cite the result field that holds it or leave it out.`;
         case "SPELLED_OUT_QUANTITY":
-          return `SPELLED_OUT_QUANTITY: the word "${problem.word}" states a quantity; cite it through a placeholder or rephrase.`;
+          return `SPELLED_OUT_QUANTITY: the word "${problem.word}" states a quantity; cite it through a placeholder or leave it out.`;
         case "ANSWERED_WITHOUT_PLACEHOLDER":
           return "ANSWERED_WITHOUT_PLACEHOLDER: an answered status must cite at least one result.";
       }
