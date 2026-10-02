@@ -92,6 +92,9 @@ describe("placeholder resolution and rendering", () => {
   test("scalars render in display form, and inputs normalize with sorted keys", () => {
     expect(renderScalar(1234567)).toBe("1,234,567");
     expect(renderScalar(false)).toBe("no");
+    expect(renderScalar(2026, ["currentWindow", "year"])).toBe("2026");
+    expect(renderScalar(2023, ["referenceYears", "0"])).toBe("2023");
+    expect(renderScalar(1234567, ["byYear", "0", "salesCents"])).toBe("1,234,567");
     expect(normalizeInput({ b: 1, a: { d: 2, c: [{ y: 1, x: 2 }] } })).toBe('{"a":{"c":[{"x":2,"y":1}],"d":2},"b":1}');
   });
 });

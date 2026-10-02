@@ -14,6 +14,8 @@ import { parseArgs } from "node:util";
 import { CASES } from "../evals/cases.ts";
 import { loadEvalContext } from "../evals/context.ts";
 import { runScriptedEvals } from "../evals/l2.ts";
+import { answerSegments } from "../src/copilot/answer.ts";
+import { formatUsd } from "../src/copilot/cost.ts";
 import type { CopilotRun } from "../src/copilot/loop.ts";
 import { DEFAULT_CHECKOUT_DIR, REPOSITORY_ROOT } from "../src/data-source/pin.ts";
 import { readerConnectionString } from "../src/db/reader-setup.ts";
@@ -31,7 +33,7 @@ if (!values["answer-key"] || (codeUrl !== undefined && !/^https:\/\/[^\s"<>]+$/.
 loadLocalEnv();
 
 const titles = new Map(CASES.map((evalCase) => [evalCase.id, evalCase.title]));
-function entryOf(id: string, run: CopilotRun, passed: boolean): SnapshotEntry {
+function entryOf(id: string, run: CopilotRun, passed: boolean, metrics: Pick<SnapshotEntry, "durationMs" | "costUsd"> = {}): SnapshotEntry {
   const view = runView(run);
   const cited = new Set(run.sources.map((source) => source.resultId));
   return {
@@ -40,9 +42,11 @@ function entryOf(id: string, run: CopilotRun, passed: boolean): SnapshotEntry {
     question: view.question,
     status: view.status,
     answer: view.answer,
+    segments: run.answer && run.renderedText !== null ? answerSegments(run.answer, run.results) : null,
     limitations: view.limitations,
     toolCalls: view.toolCalls.map((call) => ({ ...call, cited: cited.has(call.id) })),
     passed,
+    ...metrics,
   };
 }
 
@@ -62,7 +66,9 @@ if (values.from) {
     level: string;
     model: string;
     startedAt: string;
-    entries: { id: string; attempt: number; passed: boolean; run: CopilotRun }[];
+    costUsd: string | null;
+    medianLatencyMs: number | null;
+    entries: { id: string; attempt: number; passed: boolean; durationMs: number; costNanodollars: number | null; run: CopilotRun }[];
   };
   if (record.level !== "L3") throw new Error("--from expects an L3 run record from npm run eval:live");
   const firsts = record.entries.filter((entry) => entry.attempt === 1);
@@ -71,7 +77,10 @@ if (values.from) {
     model: record.model,
     generatedAt: record.startedAt,
     dataset: datasetOf(firsts.map((entry) => entry.run)),
-    entries: firsts.map((entry) => entryOf(entry.id, entry.run, entry.passed)),
+    entries: firsts.map((entry) =>
+      entryOf(entry.id, entry.run, entry.passed, { durationMs: entry.durationMs, costUsd: entry.costNanodollars === null ? null : formatUsd(entry.costNanodollars) }),
+    ),
+    run: { costUsd: record.costUsd, medianLatencyMs: record.medianLatencyMs },
   };
 } else {
   const readerUrl = readerConnectionString(process.env);

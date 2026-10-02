@@ -89,10 +89,41 @@ function lookup(value: unknown, path: readonly string[]): unknown {
   return current;
 }
 
-export function renderScalar(value: string | number | boolean): string {
+/**
+ * Integers get thousands separators, except years: a field whose last named segment mentions a
+ * year (year, currentYear, referenceYears.0) renders as 2026, not 2,026.
+ */
+export function renderScalar(value: string | number | boolean, path: readonly string[] = []): string {
   if (typeof value === "string") return value;
   if (typeof value === "boolean") return value ? "yes" : "no";
+  const field = [...path].reverse().find((segment) => !/^\d+$/.test(segment));
+  if (field !== undefined && /year/i.test(field)) return String(value);
   return Number.isSafeInteger(value) ? formatInteger(value) : String(value);
+}
+
+/** A piece of a rendered answer: literal text, or a value copied from a tool result field. */
+export type AnswerSegment = { text: string } | { text: string; resultId: string; tool: string; path: string };
+
+/**
+ * The answer split into literal text and cited values, so a display can show where each figure
+ * came from. Null when a placeholder does not resolve to a scalar (the answer was not valid).
+ */
+export function answerSegments(answer: Answer, results: readonly ToolResultRecord[]): AnswerSegment[] | null {
+  const byId = new Map(results.map((result) => [result.id, result]));
+  const segments: AnswerSegment[] = [];
+  let last = 0;
+  for (const match of answer.text.matchAll(PLACEHOLDER)) {
+    const [whole, id, dotted] = match as unknown as [string, string, string];
+    const result = byId.get(id);
+    const path = dotted.slice(1);
+    const value = result ? lookup(result.value, path.split(".")) : undefined;
+    if (!result || (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean")) return null;
+    if (match.index > last) segments.push({ text: answer.text.slice(last, match.index) });
+    segments.push({ text: renderScalar(value, path.split(".")), resultId: id, tool: result.tool, path });
+    last = match.index + whole.length;
+  }
+  if (last < answer.text.length) segments.push({ text: answer.text.slice(last) });
+  return segments;
 }
 
 export interface Resolution {
@@ -121,7 +152,7 @@ export function resolveAnswer(answer: Answer, results: readonly ToolResultRecord
       return match;
     }
     if (!cited.includes(id)) cited.push(id);
-    return renderScalar(value);
+    return renderScalar(value, dotted.slice(1).split("."));
   });
   const outside = answer.text.replace(PLACEHOLDER, " ");
   if (ANY_BRACES.test(outside)) problems.push({ code: "MALFORMED_PLACEHOLDER" });

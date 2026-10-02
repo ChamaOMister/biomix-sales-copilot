@@ -123,4 +123,38 @@ describe("snapshot", () => {
     expect(ungraded).not.toContain("the checks");
     expect(ungraded).not.toContain("Source code");
   });
+
+  test("links each cited figure to its source, renders lists and offers status filters", () => {
+    const html = renderSnapshot({
+      level: "L3",
+      model: "anthropic:claude-opus-5-5:medium",
+      generatedAt: "2030-01-31T00:00:00.000Z",
+      dataset: null,
+      run: { costUsd: "$0.8943", medianLatencyMs: 12_000 },
+      entries: [
+        {
+          id: "E01",
+          title: "t",
+          question: "q",
+          status: "answered",
+          answer: "ignored when segments exist",
+          segments: [{ text: "Sales:\n- total " }, { text: "R$ 1.00", resultId: "r1", tool: "sales_totals", path: "totals.salesBrl" }, { text: "\n- <b>no</b>" }],
+          limitations: [],
+          toolCalls: [{ id: "r1", tool: "sales_totals", input: {}, isError: false, value: {}, cited: true }],
+          passed: true,
+        },
+        { id: "E02", title: "t", question: "q", status: "out_of_scope", answer: "No.", limitations: [], toolCalls: [], passed: true },
+      ],
+    });
+    expect(html).toContain(`<a class="cite" href="#E01-r1" title="From r1 (sales_totals): totals.salesBrl">R$ 1.00</a>`);
+    expect(html).toContain(`<details id="E01-r1">`);
+    expect(html).toContain("<p>Sales:</p><ul><li>total <a");
+    expect(html).toContain("<li>&lt;b&gt;no&lt;/b&gt;</li>");
+    expect(html).toContain(`id="f-answered"`);
+    expect(html).toContain(`id="f-declined"`);
+    expect(html).not.toContain(`id="f-failed"`);
+    expect(html).toContain(">$0.89<");
+    expect(html).toContain("claude-opus-5-5, effort medium");
+    expect(html).not.toMatch(/<script/i);
+  });
 });
