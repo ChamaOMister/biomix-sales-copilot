@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biomix Sales Copilot</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --text: #1d1d1b; --muted: #61615c; --line: #e2e1dc;
+    --accent: #2f6b4f; --accent-text: #ffffff; --warn: #8a5a00; --error: #a33a2c; --code: #f1f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161715; --panel: #1f201e; --text: #ecebe6; --muted: #a4a39c; --line: #34352f;
+      --accent: #6fb08e; --accent-text: #10120f; --warn: #e0b45a; --error: #f08a7a; --code: #272824; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  header h1 { font-size: 1.45rem; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.8rem; border: 1px solid var(--line); color: var(--muted); }
+  .badge.live { border-color: var(--accent); color: var(--accent); }
+  nav { display: flex; gap: 8px; margin: 20px 0 12px; }
+  nav button { background: none; border: 1px solid var(--line); color: var(--text); padding: 6px 14px; border-radius: 8px; cursor: pointer; font: inherit; }
+  nav button[aria-selected="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  textarea, select { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  textarea { min-height: 84px; resize: vertical; }
+  textarea.code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; min-height: 120px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .primary { background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px; padding: 8px 18px; font: inherit; cursor: pointer; }
+  .primary:disabled { opacity: 0.5; cursor: wait; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .examples button { background: var(--code); border: 1px solid var(--line); color: var(--text); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+  .answer { margin-top: 16px; }
+  .answer p.text { font-size: 1.05rem; white-space: pre-wrap; }
+  .status { font-weight: 600; }
+  .status.answered { color: var(--accent); } .status.insufficient_data, .status.out_of_scope { color: var(--warn); }
+  .status.incomplete, .status.format_error, .error { color: var(--error); }
+  h3 { font-size: 0.95rem; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  ul { margin: 0; padding-left: 20px; }
+  details { border-top: 1px solid var(--line); padding: 6px 0; }
+  summary { cursor: pointer; }
+  pre { background: var(--code); border-radius: 8px; padding: 10px; overflow-x: auto; font-size: 0.8rem; max-height: 420px; }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Biomix Sales Copilot</h1>
+    <p>Answers questions about invoiced sales and scheduled collections of a fictional company, citing the read-only tool results behind every figure. <span id="mode" class="badge">…</span></p>
+  </header>
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-tab="ask">Ask</button>
+    <button role="tab" aria-selected="false" data-tab="tools">Tool console</button>
+  </nav>
+
+  <section class="panel" id="tab-ask">
+    <label for="question" class="muted">Your question</label>
+    <textarea id="question" maxlength="500" placeholder="How do Home &amp; Garden sales so far this year compare with the same period last year?"></textarea>
+    <div class="examples" id="examples"></div>
+    <div class="row"><button class="primary" id="ask">Ask</button><span class="muted" id="ask-note"></span></div>
+    <div class="answer" id="answer" hidden></div>
+  </section>
+
+  <section class="panel" id="tab-tools" hidden>
+    <label for="tool" class="muted">Tool</label>
+    <select id="tool"></select>
+    <p class="muted" id="tool-description"></p>
+    <label for="args" class="muted">Input (JSON)</label>
+    <textarea id="args" class="code">{}</textarea>
+    <div class="row"><button class="primary" id="run-tool">Run tool</button></div>
+    <pre id="tool-result" hidden></pre>
+  </section>
+  <p class="muted">All data is synthetic and fictional. Scheduled installments are contractual amounts, not payments; the data has no payments.</p>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
+const EXAMPLES = [
+  "What period does the sales data cover?",
+  "Which were the five largest products by invoiced sales last quarter?",
+  "How do Agro sales so far this year compare with the same period last year?",
+  "Which customers bought in every agro season from 2023 to 2025 but not in 2026?",
+  "What is scheduled to fall due next month?",
+];
+const TOOL_EXAMPLES = {
+  sales_totals: { period: "calendar-year:2025", groupBy: "businessUnit" },
+  compare_periods: { current: "year-to-date", previous: "same-period-previous-year", groupBy: "seller" },
+  find_entities: { kind: "customer", query: "flor" },
+  invoice_details: { invoiceNumbers: ["000001"] },
+  scheduled_collections: { period: "month:2026-03" },
+  installments_due: { duePeriod: "month:2026-10" },
+  customer_activity: { customerId: "C0012", period: "calendar-year:2025", grain: "month" },
+  recurring_window_gaps: { window: "agro-season", referenceYears: [2023, 2024, 2025], currentYear: 2026 },
+  same_day_invoices: { period: { from: "2023-01-01", to: "2026-09-25" } },
+  resent_invoices: { period: { from: "2023-01-01", to: "2026-09-25" } },
+};
+
+async function api(path, body) {
+  const response = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const value = await response.json();
+  if (!response.ok) throw new Error(value.error || `HTTP ${response.status}`);
+  return value;
+}
+
+for (const tab of document.querySelectorAll("nav button")) {
+  tab.addEventListener("click", () => {
+    for (const other of document.querySelectorAll("nav button")) other.setAttribute("aria-selected", String(other === tab));
+    $("tab-ask").hidden = tab.dataset.tab !== "ask";
+    $("tab-tools").hidden = tab.dataset.tab !== "tools";
+  });
+}
+
+for (const example of EXAMPLES) {
+  const button = el("button", example);
+  button.addEventListener("click", () => { $("question").value = example; });
+  $("examples").append(button);
+}
+
+function renderAnswer(run) {
+  const box = $("answer");
+  box.replaceChildren();
+  box.hidden = false;
+  box.append(el("p", `Status: ${run.status.replace("_", " ")}${run.incompleteReason ? ` (${run.incompleteReason})` : ""}`, `status ${run.status}`));
+  if (run.answer) box.append(el("p", run.answer, "text"));
+  if (run.limitations.length) {
+    box.append(el("h3", "Limitations"));
+    const list = el("ul");
+    for (const item of run.limitations) list.append(el("li", item.description));
+    box.append(list);
+  }
+  if (run.toolCalls.length) {
+    box.append(el("h3", "Sources and tool calls"));
+    const cited = new Set(run.sources.map((source) => source.resultId));
+    for (const call of run.toolCalls) {
+      const details = el("details");
+      details.append(el("summary", `[${call.id}] ${call.tool} ${JSON.stringify(call.input)}${call.isError ? " (error)" : ""}${cited.has(call.id) ? "" : " (not cited)"}`));
+      details.append(el("pre", JSON.stringify(call.value, null, 2)));
+      box.append(details);
+    }
+  }
+  box.append(el("p", `${run.toolCalls.length} tool calls, ${run.modelRequests} model requests, ${run.usage.inputTokens + run.usage.cacheReadTokens + run.usage.cacheWriteTokens} input and ${run.usage.outputTokens} output tokens, ${(run.durationMs / 1000).toFixed(1)} s`, "muted"));
+}
+
+$("ask").addEventListener("click", async () => {
+  const question = $("question").value.trim();
+  if (!question) return;
+  $("ask").disabled = true;
+  $("ask-note").textContent = "Thinking and calling tools…";
+  try {
+    renderAnswer(await api("/api/ask", { question }));
+    $("ask-note").textContent = "";
+  } catch (error) {
+    $("answer").hidden = true;
+    $("ask-note").textContent = error.message;
+    $("ask-note").className = "error";
+  } finally {
+    $("ask").disabled = false;
+  }
+});
+
+$("run-tool").addEventListener("click", async () => {
+  let args;
+  try { args = JSON.parse($("args").value); } catch { $("tool-result").hidden = false; $("tool-result").textContent = "The input is not valid JSON."; return; }
+  $("run-tool").disabled = true;
+  try {
+    const result = await api("/api/tool", { name: $("tool").value, args });
+    $("tool-result").textContent = JSON.stringify(result.value, null, 2);
+  } catch (error) {
+    $("tool-result").textContent = error.message;
+  } finally {
+    $("tool-result").hidden = false;
+    $("run-tool").disabled = false;
+  }
+});
+
+(async () => {
+  const info = await api("/api/info");
+  $("mode").textContent = info.mode === "live" ? `live: ${info.model}` : "keyless: tool console only";
+  $("mode").className = `badge ${info.mode}`;
+  if (info.mode !== "live") $("ask-note").textContent = "No API key is configured, so questions are not answered here. Try the tool console.";
+  for (const tool of info.tools) $("tool").append(el("option", tool.name));
+  const describe = () => {
+    const tool = info.tools.find((entry) => entry.name === $("tool").value);
+    $("tool-description").textContent = tool ? tool.description : "";
+    $("args").value = JSON.stringify(TOOL_EXAMPLES[$("tool").value] || {}, null, 2);
+  };
+  $("tool").addEventListener("change", describe);
+  describe();
+})();
+</script>
+</body>
+</html>

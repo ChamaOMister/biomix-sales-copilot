@@ -1,0 +1,10 @@
+{
+  "comment": "Usage block shaped like a Messages API response, for the cost test. Fictional figures.",
+  "model": "claude-opus-5-5",
+  "usage": {
+    "input_tokens": 1830,
+    "output_tokens": 2410,
+    "cache_creation_input_tokens": 512,
+    "cache_read_input_tokens": 6120
+  }
+}

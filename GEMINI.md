@@ -15,11 +15,11 @@ git log --oneline -5
 
 State in one line which milestone is current (per `CLAUDE.md` "Current status") and which task from section 3 you are about to do. If none applies, say so and stop.
 
-## 1. State at handoff (2026-09-30)
+## 1. State at handoff (2026-10-02)
 
-- Milestone 0 (planning). `docs/decision-001-project-2.md`, `docs/milestones.md`, `CLAUDE.md` and the updated `README.md` are written but **not committed**, and the maintainer has **not approved** them yet.
-- The four blocking questions in decision 001 section 8 are unanswered: (1) model provider and key, (2) UI, (3) language and money format, (4) the `installments_due` due-date view.
-- No code, dependencies, `.gitignore`, dev container, CI or tests exist. There is no `npm run check` yet.
+- Decision 001 is approved, and its open questions are decided (see its section 8).
+- Milestones 1–10 are implemented and await the maintainer's review; see `CLAUDE.md` "Current status" and `docs/milestone-reports.md`. Task A and Task B below are therefore done; do not redo them.
+- `npm run check`, `npm run eval:tools` and `npm run eval:scripted` exist and need the loaded database (`npm run data:load`, `npm run db:reader`).
 
 ## 2. Non-negotiable rules
 

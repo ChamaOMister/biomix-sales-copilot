@@ -2,9 +2,9 @@
 
 You are the implementation assistant for biomix-sales-copilot, Project 2 of a public portfolio. The maintainer owns business decisions and coordinates implementation and review; Codex reviews each milestone when available. Follow the maintainer's live instructions over reference documents.
 
-## Current status (2026-09-30)
+## Current status (2026-10-02)
 
-**Planning (milestone 0) done.** [Decision 001](docs/decision-001-project-2.md) and [the milestone plan](docs/milestones.md) are approved (due-date view deferred to Claude Code). No application code, dependencies, dev container, CI or tests exist yet, so there is no test suite and no `npm run check`. Next: milestone 1 (repository foundation).
+**Milestones 1–10 implemented, awaiting the maintainer's review** (reports in [docs/milestone-reports.md](docs/milestone-reports.md)). `npm run check` runs lint, typecheck and the behavior tests; `npm run eval:tools` (L1) and `npm run eval:scripted` (L2) pass with no API key. L3 (`npm run eval:live`) has not been run: no API key was available. A fresh-Codespace build and a GitHub CI run have not been observed. Next: milestone 11 (verify and package) after review.
 
 ## What this project is
 

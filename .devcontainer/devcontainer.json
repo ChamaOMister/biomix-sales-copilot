@@ -1,0 +1,23 @@
+{
+  "name": "Biomix Sales Copilot",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24.21.0" }
+  },
+  "remoteUser": "vscode",
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+  "postCreateCommand": "npm ci && npm run setup:env && npm run data:load && npm run db:reader",
+  "waitFor": "postCreateCommand",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Copilot web (npm run web)", "onAutoForward": "notify", "protocol": "http" }
+  },
+  "containerEnv": {
+    "DATABASE_URL": "postgres://biomix:biomix@localhost:5432/biomix"
+  },
+  "customizations": {
+    "vscode": { "extensions": ["dbaeumer.vscode-eslint", "anthropic.claude-code"] }
+  }
+}

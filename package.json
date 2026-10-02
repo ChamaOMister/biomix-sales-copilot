@@ -10,14 +10,31 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "setup:env": "node scripts/setup-env.ts"
+    "setup:env": "node scripts/setup-env.ts",
+    "data:load": "node scripts/data-load.ts",
+    "data:reset": "node scripts/data-reset.ts",
+    "db:reader": "node scripts/db-reader.ts",
+    "tools": "node scripts/tools.ts",
+    "eval:tools": "node scripts/eval-tools.ts --answer-key .cache/project-1/data/generated/evaluation/answer-key.json",
+    "eval:scripted": "node scripts/eval-scripted.ts --answer-key .cache/project-1/data/generated/evaluation/answer-key.json",
+    "ask": "node scripts/ask.ts",
+    "eval:live": "node scripts/eval-live.ts --answer-key .cache/project-1/data/generated/evaluation/answer-key.json",
+    "web": "node scripts/web.ts",
+    "web:snapshot": "node scripts/eval-snapshot.ts --answer-key .cache/project-1/data/generated/evaluation/answer-key.json"
   },
   "devDependencies": {
-    "eslint": "10.11.0",
-    "typescript-eslint": "8.71.0",
     "@eslint/js": "10.0.1",
-    "vitest": "5.0.2",
-    "@types/node": "26.6.3",
-    "typescript": "6.0.3"
+    "@types/node": "24.19.1",
+    "@types/pg": "8.23.1",
+    "eslint": "10.11.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.131.0",
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "pg": "8.23.0",
+    "zod": "4.6.5"
   }
 }

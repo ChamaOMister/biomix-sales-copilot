@@ -1,0 +1,56 @@
+name: Checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Same Postgres major version as the dev container. The database tests fail rather than skip
+    # when CI has no DATABASE_URL.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: biomix
+          POSTGRES_PASSWORD: biomix
+          POSTGRES_DB: biomix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U biomix"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: true
+      DATABASE_URL: postgres://biomix:biomix@localhost:5432/biomix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run setup:env
+      # Clones the pinned Project 1 release into .cache/ and loads seed 2026.
+      - run: npm run data:load
+      # The read-only role and views the MCP server connects through.
+      - run: npm run db:reader
+      # lint → typecheck → behavior tests
+      - run: npm run check
+      # L1: each evaluation case's reference tool plan against the real MCP server (no API key).
+      - run: npm run eval:tools
+      # L2: the copilot loop with a scripted model against the real MCP server (no API key).
+      - run: npm run eval:scripted
+      # The self-contained answer snapshot (L2, synthetic data), kept with the run for review.
+      - run: npm run web:snapshot
+      - uses: actions/upload-artifact@v4
+        with:
+          name: copilot-snapshot
+          path: .cache/web/biomix-copilot-snapshot.html
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30

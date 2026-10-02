@@ -1,0 +1,26 @@
+# Dev container services: the workspace container and Postgres 17, as in Project 1.
+# The app container shares the database's network, so Postgres is reachable at localhost:5432.
+# The credentials are Project 1's fixed development values for a database that is never exposed
+# publicly; they are not secrets. Data survives container rebuilds in the named volume.
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+    command: sleep infinity
+    volumes:
+      - ../..:/workspaces:cached
+    network_mode: service:db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: biomix
+      POSTGRES_PASSWORD: biomix
+      POSTGRES_DB: biomix
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
