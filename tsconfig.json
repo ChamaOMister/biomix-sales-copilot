@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "module": "nodenext",
+    "target": "es2024",
+    "types": ["node"]
+  },
+  "include": [
+    "src",
+    "scripts",
+    "evals",
+    "test",
+    "*.ts",
+    "*.js"
+  ]
+}
